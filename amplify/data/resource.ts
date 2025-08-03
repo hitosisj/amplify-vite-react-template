@@ -18,7 +18,7 @@ const schema = a.schema({
     .arguments({
       name: a.string()
     })
-    .authorization((allow) => allow.publicApiKey())
+    .authorization((allow) => allow.authenticated())
     .handler((a.handler.function(sayHello)))
     .returns(a.string())
 });
