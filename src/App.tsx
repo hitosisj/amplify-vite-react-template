@@ -7,20 +7,28 @@ const client = generateClient<Schema>();
 
 function App() {
 
-  const { signOut } = useAuthenticator();
+  const { signOut, user } = useAuthenticator();
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-
+  const [files,setFiles] =  useState<Array<Schema["S3File"]["type"]>>([]);
   useEffect(() => {
     client.models.Todo.observeQuery().subscribe({
       next: (data) => setTodos([...data.items]),
     });
   }, []);
 
+  useEffect(() => {
+    async function load() {
+      const files = await client.queries.getS3Objects();
+     setFiles(files.data as Schema["S3File"]["type"][] )
+    }
+    load();
+  }, []);
+  
+
   function createTodo() {
     client.models.Todo.create({ content: window.prompt("Todo content") });
   }
 
-    
   async function deleteTodo(id: string) {
     client.models.Todo.delete({ id })
    const log = await sayHello("Jeffrey");
@@ -28,7 +36,7 @@ function App() {
   }
 
   async function sayHello(name: string){
-    return await client.mutations.sayHello({name});
+    return await client.mutations.sayHello({name, userId: user.signInDetails?.loginId});
   }
   return (
     <main>
@@ -39,6 +47,13 @@ function App() {
           <li onClick={() => deleteTodo(todo.id)} key={todo.id}>{todo.content}</li>
         ))}
       </ul>
+
+      <ul>
+        {files.map((file) => (
+          <li  key={file.key}>{file.key}</li>
+        ))}
+      </ul>
+
       <div>
         🥳 App successfully hosted. Try creating a new todo.
         <br />
